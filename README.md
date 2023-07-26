@@ -56,15 +56,15 @@ Experiments with the OPSE algorithm were performed as part of a collaborative re
 
 | <img src="https://raw.githubusercontent.com/cjuliani/probabilistic-similarity-evidence-FCN/master/figures/grain_segment.PNG" width="65%"> |
 |:--:|
-| Example of an RGB micro-photograph of mineral grains with corresponding annotations (A) (morphological erosion applied; background in white) and pixel predictions (P). Scanning-Electron-Microscope Backscatter images indicated three different minerals in this sample: grains marked by black squares are mostly apatite grains, yellow dots are monazites, and unmarked grains are zircons.
+| Example of an RGB micro-photograph of mineral grains with corresponding annotations (A) and pixel predictions (P). |
 
 | <img src="https://raw.githubusercontent.com/cjuliani/probabilistic-similarity-evidence-FCN/master/figures/grain_similarity.PNG" width="85%"> |
 |:--:|
-| Examples of probabilistic similarity measures of mineral grains identified by U-Net; average values are indicated above each object frame and presented in decreasing order.|
+| Examples of probabilistic similarity measures of mineral grains. (a) Single query using a Gaussian function. (b) Two simultaneous queries performed with a trapezoidal function. |
 
 | <img src="https://raw.githubusercontent.com/cjuliani/probabilistic-similarity-evidence-FCN/master/figures/grain_cluster_scatter.png" width="50%"> |
 |:--:|
-| Examples of mean activations calculated per segmented grain and projected in 3D feature spaces. 39 clusters are displayed, each corresponding to a pool of similar grains within a probabilistic value range. Features are indicated per axis.
+| Examples of features magnitudes (mean values) calculated per segmented grain and projected in 3D feature spaces. 39 clusters are displayed, each corresponding to a pool of similar grains defined within a probabilistic value range. Features are indicated per axis.
 
 ## License
 This library is licensed under the [LICENCE](https://github.com/cjuliani/probabilistic-similarity-evidence-FCN/blob/master/LICENSE)

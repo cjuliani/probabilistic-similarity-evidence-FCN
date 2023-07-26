@@ -54,7 +54,7 @@ Two types of membership functions are implemented, notably the Gaussian (a) and 
 ## Examples of similarity analysis of minerals from micro-photographs 
 Experiments with the OPSE algorithm were performed as part of a collaborative research on zircon grains at [IGP, NTNU](https://www.ntnu.edu/igp) (2021).
 
-| <img src="https://raw.githubusercontent.com/cjuliani/probabilistic-similarity-evidence-FCN/master/figures/grain_segmentation.PNG" width="65%"> |
+| <img src="https://raw.githubusercontent.com/cjuliani/probabilistic-similarity-evidence-FCN/master/figures/grain_segment.PNG" width="65%"> |
 |:--:|
 | Example of an RGB micro-photograph of mineral grains with corresponding annotations (A) (morphological erosion applied; background in white) and pixel predictions (P). Scanning-Electron-Microscope Backscatter images indicated three different minerals in this sample: grains marked by black squares are mostly apatite grains, yellow dots are monazites, and unmarked grains are zircons.
 

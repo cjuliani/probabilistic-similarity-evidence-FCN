@@ -6,7 +6,7 @@ OPSE is an algorithm processing the latent characteristics of fully convolutiona
 
 ### Feature extraction and transformation procedures
 Two types of membership functions are implemented, notably the Gaussian (a) and trapezoidal (b) functions:
-![Membership functions](./figures/mmb_functions.png)
+![Membership functions](./figures/mmb_function.png)
 
 The object-oriented extraction of a feature m_(i,j) (yellow mask) from an activated feature f_(j) is done for a set of features F:
 ![Feature extraction to transformation](./figures/extract_proc.png)
@@ -22,10 +22,12 @@ Average values are presented in decreasing order from top left to bottom right. 
 
 Examples of similarity results for the queried digit “1”, using a Gaussian membership function and ResNet50 as feature extractor:
 ![Similarity analysis of digit 1](./figures/sim_digit_1.png)
+
 Note the difference of digit orientation between the results of the two similarity queries.
 
 Examples of similarity results for the queried digit “6”, using a Gaussian membership function and ResNet50 as feature extractor:
 ![Similarity analysis of digit 6](./figures/sim_digit_2.png)
+
 Note the difference of line thickness between the results of the two similarity queries.
 
 # How to use

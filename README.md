@@ -29,7 +29,7 @@ STAT_TYPES = ['mean', 'std', 'cv']
 The object-oriented extraction of a feature $m_{i,j}$ (yellow mask) from an activated feature $f_j$ is done for a set of features F from a given layer (e.g., `conv11`). A statistical transformation is performed to obtaine the feature vector $v_i$, which further converted into a probabilistic similarity vector $ρ_i$. This conversion is done after fuzzifying the probability density function (PDF) of every feature component indexed $j$, whose value for an $i$th object is $x_{i,j}$. If we were to evaluate the similarity analysis of an object indexed using a Gaussian membership function (GMF), its feature value $x_{q,j}$ calculated from a cropped feature $m_{q,j}$ would correspond to the center of that function.
 ![Feature extraction to transformation](./figures/extract_proc.png)
 
-Two types of membership functions are implemented, notably the Gaussian (a) and trapezoidal (b) functions written $μ_A ̃_{u_j}^q$. They both transform the value of a feature $j$ for a given object query $q$, denoted as $x_{q,j}$.
+Two types of membership functions are implemented, notably the Gaussian (a) and trapezoidal (b) functions written $μ_{A ̃_{u_j}}$. They both transform the value of a feature $j$ for a given object query $q$, denoted as $x_{q,j}$.
 ![Membership functions](./figures/mmb_function.png)
 
 ### Similarity search
@@ -45,15 +45,16 @@ Example of probabilistic similarity results for two queries (indicated by black 
 
 Average values are presented in decreasing order from top left to bottom right. Only 24 objects shown.
 
-Examples of similarity results for the queried digit “1”, using a Gaussian membership function and ResNet50 as feature extractor:
 
-![Similarity analysis of digit 1](./figures/sim_digit_1.png)
+| ![Similarity analysis of digit 1](./figures/sim_digit_1.png) |
+|:--:|
+| Similarity results for the queried digit “1”, using a Gaussian membership function and ResNet50 as feature extractor. Note the difference of digit orientation between the results of the two similarity queries. |
 
-Note the difference of digit orientation between the results of the two similarity queries.
 
-Examples of similarity results for the queried digit “6”, using a Gaussian membership function and ResNet50 as feature extractor:
+| ![Similarity analysis of digit 6](./figures/sim_digit_2.png) |
+|:--:|
+| Similarity results for the queried digit “6” using a Gaussian membership function and ResNet50 as feature extractor. Note the difference of line thickness between the results of the two similarity queries. |
 
-![Similarity analysis of digit 6](./figures/sim_digit_2.png)
 
-Note the difference of line thickness between the results of the two similarity queries.
-
+### License
+This library is licensed under the [LICENCE](https://github.com/cjuliani/probabilistic-similarity-evidence-FCN/blob/master/LICENSE)

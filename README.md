@@ -28,11 +28,11 @@ STAT_TYPES = ['mean', 'std', 'cv']
 ### Feature extraction and transformation procedures
 The object-oriented extraction of a feature $m_{i,j}$ (yellow mask) from an activated feature $f_j$ is done for a set of features F from a given layer (e.g., `conv11`). A statistical transformation is performed to obtaine the feature vector $v_i$, which further converted into a probabilistic similarity vector $ρ_i$. This conversion is done after fuzzifying the probability density function (PDF) of every feature component indexed $j$, whose value for an $i$th object is $x_{i,j}$. If we were to evaluate the similarity analysis of an object indexed using a Gaussian membership function (GMF), its feature value $x_{q,j}$ calculated from a cropped feature $m_{q,j}$ would correspond to the center of that function.
 
-![Feature extraction to transformation](./figures/extract_procedure2.png)
+![Feature extraction to transformation](./figures/extract_procedure.png)
 
 Two types of membership functions are implemented, notably the Gaussian (a) and trapezoidal (b) functions written $μ_{A ̃_{u_j}}$. They both transform the value of a feature $j$ for a given object query $q$, denoted as $x_{q,j}$.
 
-![Membership functions](./figures/mmb_functions2.png)
+![Membership functions](./figures/mmb_functions.png)
 
 ### Examples of similarity analysis
 | ![Similarity analysis by one query](./figures/sim_analysis_1.png) |

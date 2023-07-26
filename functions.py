@@ -40,44 +40,43 @@ agent.plot_feature_mean_signal_distribution(
 # check network sparsity (channel level)
 agent.check_channel_sparsity(cls='conv100')
 
-# Apply pruning (per layer) and calculate activation statistics
+# Apply pruning (per layer)
 agent.apply_pruning(
-    mode='pca',
+    mode='pca',  # by 'pca' or 'cv' (coefficient of variation)
     cv_condition='above',
     cls='conv100',
     coef=.99)
 
-agent.apply_pruning(
-    mode='cv',
-    cv_condition='above',
-    cls='conv100',
-    coef=.5)
-
+# Scatter plot of weight values associated to network features (non-pruned)
 agent.plot_weigths(
     cls='conv100',
     weight_type='pca')
 
-# Similarity analysis
+# Apply fuzzy evaluation of feature vectors described, which are
+# by descriptive statistics (mean, std, and/or cv), given a target
+# object(s).
 agent.fuzzify(
-    targets=[0],
+    targets=[0],  # indices of target objects from dataset
     stat_types=['mean'],  # mean, std, cv
     method='gaussian',  # gaussian, gaussian_centroid, trapeze
     gfactor=0.2,  # spread parameter used in gaussian or trapeze function
     weighting=None,  # None, pca, speciation
     norm=False,
-    obj_range=2000)
+    obj_range=1000000  # limit the number of objects from dataset to compare target with
+)
 
-agent.plot_target_fuzzy_clusters(
+# Plot N objects sharing a certain similarity with target object(s)
+# defined in fuzzy analysis.
+agent.plot_target_similarity(
     show_mode='images',  # images, features
-    out_n=20,  # number of objects shown (closest ones to target)
+    out_n=20,  # number of objects shown (the closest ones to target)
     layer='conv11',  # if show mode is 'features', features of this layer showed
     layer_feat_id=0,
     title_type='probability',  # object, probability
     show=True,
     save=False)
 
-# -----------------
-# Explore clusters signals + get their weights
+# Explore transformed feature values per layer
 agent.get_cluster_signal_difference(
     stat_type='mean',
     calc_mode='per_cluster',
@@ -109,12 +108,14 @@ agent.plot_group_signals(
     show=True,
     save=False)
 
-# check percentage of feature whose act. values within given interval
+# Check percentage of feature whose activation values are within
+# a given interval among layers of the network analyzed
 agent.get_signal_percentage(sig_interval=[0.2, 0.4])
 
+# Calculates percentage of total signal change per layer
 agent.get_signal_per_layer()
 
-# calculate percentage of total signal change per layer
+# Displays distribution of feature values in percentage
 agent.plot_signal_percentage(
     mode='histogram',  # histogram, cumsum
     save=False)

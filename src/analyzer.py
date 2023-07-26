@@ -651,11 +651,12 @@ class ConvAgent:
             self.diff_sum = da.standardize_by_minmax(self.diff_sum)
 
     def get_signal_percentage(self, sig_interval):
-        """Checks the percentage of feature whose act. values within given interval
+        """Checks the percentage of feature whose activation values
+        are within given interval
 
         Args:
-            sig_interval (list): signal magnitude interval to check its percentage taken in
-                network.
+            sig_interval (list): signal magnitude interval to check its
+                percentage taken in network.
         """
         print(f"(!) Results for class '{self.current_cls}' and pruning coef. of {self.current_coef}.")
         da.get_signal_percentage(
@@ -848,7 +849,7 @@ class ConvAgent:
             mode=mode,
             save=save)
 
-    def plot_target_fuzzy_clusters(self, show_mode, out_n, layer, layer_feat_id, title_type, show, save):
+    def plot_target_similarity(self, show_mode, out_n, layer, layer_feat_id, title_type, show, save):
         """Display probabilistic similarity results for given target(s).
 
         Args:

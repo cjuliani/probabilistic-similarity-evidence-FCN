@@ -32,29 +32,22 @@ The object-oriented extraction of a feature $m_{i,j}$ (yellow mask) from an acti
 Two types of membership functions are implemented, notably the Gaussian (a) and trapezoidal (b) functions written $μ_{A ̃_{u_j}}$. They both transform the value of a feature $j$ for a given object query $q$, denoted as $x_{q,j}$.
 ![Membership functions](./figures/mmb_function.png)
 
-### Similarity search
-Examples of probabilistic similarity results for single queries (indicated by black square brackets) using a Gaussian membership function:
+### Examples of similarity search
+| ![Similarity analysis by one query](./figures/sim_analysis_1.png) |
+|:--:|
+| Probabilistic similarity results for single queries (indicated by black square brackets) using a Gaussian membership function. Average values are indicated in decreasing order from top left to bottom right. Only 16 objects are shown per search. |
 
-![Similarity analysis by one query](./figures/sim_analysis_1.png)
-
-Average values are indicated in decreasing order from top left to bottom right. Only 16 objects are shown per search.
-
-Example of probabilistic similarity results for two queries (indicated by black square brackets) using a trapezoidal membership function:
-
-![Similarity analysis by two queries](./figures/sim_analysis_2.png)
-
-Average values are presented in decreasing order from top left to bottom right. Only 24 objects shown.
-
+| ![Similarity analysis by two queries](./figures/sim_analysis_2.png) |
+|:--:|
+| Probabilistic similarity results for two queries (indicated by black square brackets) using a trapezoidal membership function. Average values are presented in decreasing order from top left to bottom right. Only 24 objects shown. |
 
 | ![Similarity analysis of digit 1](./figures/sim_digit_1.png) |
 |:--:|
 | Similarity results for the queried digit “1”, using a Gaussian membership function and ResNet50 as feature extractor. Note the difference of digit orientation between the results of the two similarity queries. |
 
-
 | ![Similarity analysis of digit 6](./figures/sim_digit_2.png) |
 |:--:|
 | Similarity results for the queried digit “6” using a Gaussian membership function and ResNet50 as feature extractor. Note the difference of line thickness between the results of the two similarity queries. |
-
 
 ### License
 This library is licensed under the [LICENCE](https://github.com/cjuliani/probabilistic-similarity-evidence-FCN/blob/master/LICENSE)

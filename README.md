@@ -67,4 +67,4 @@ Experiments with the OPSE algorithm were performed as part of a collaborative re
 | Examples of features magnitudes (mean values) calculated per segmented grain and projected in 3D feature spaces. 39 clusters are displayed, each corresponding to a pool of similar grains defined within a probabilistic value range. Features are indicated per axis.
 
 ## License
-This library is licensed under the [LICENCE](https://github.com/cjuliani/probabilistic-similarity-evidence-FCN/blob/master/LICENSE)
+This library is licensed under this [LICENCE](https://github.com/cjuliani/probabilistic-similarity-evidence-FCN/blob/master/LICENSE).

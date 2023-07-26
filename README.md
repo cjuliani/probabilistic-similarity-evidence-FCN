@@ -26,14 +26,15 @@ STAT_TYPES = ['mean', 'std', 'cv']
 
 
 ### Feature extraction and transformation procedures
-Two types of membership functions are implemented, notably the Gaussian (a) and trapezoidal (b) functions written $μ_(A ̃_(u_j ))^q$. They both transform the value of a feature $j$ for a given object query $q$, denoted as $x_(q,j)$.
-![Membership functions](./figures/mmb_function.png)
-
-The object-oriented extraction of a feature $m_(i,j)$ (yellow mask) from an activated feature $f_(j)$ is done for a set of features F from a given layer (e.g., `conv11`). A statistical transformation is performed to obtaine the feature vector $v_i$, which further converted into a probabilistic similarity vector $ρ_i$. This conversion is done after fuzzifying the probability density function (PDF) of every feature component indexed $j$, whose value for an $i$th object is $x_(i,j)$. If we were to evaluate the similarity analysis of an object indexed using a Gaussian membership function (GMF), its feature value $x_(q,j)$ calculated from a cropped feature $m_(q,j)$ would correspond to the center of that function.
+The object-oriented extraction of a feature $m_{i,j}$ (yellow mask) from an activated feature $f_j$ is done for a set of features F from a given layer (e.g., `conv11`). A statistical transformation is performed to obtaine the feature vector $v_i$, which further converted into a probabilistic similarity vector $ρ_i$. This conversion is done after fuzzifying the probability density function (PDF) of every feature component indexed $j$, whose value for an $i$th object is $x_(i,j)$. If we were to evaluate the similarity analysis of an object indexed using a Gaussian membership function (GMF), its feature value $x_(q,j)$ calculated from a cropped feature $m_(q,j)$ would correspond to the center of that function.
 ![Feature extraction to transformation](./figures/extract_proc.png)
+
+Two types of membership functions are implemented, notably the Gaussian (a) and trapezoidal (b) functions written $μ_A ̃_(u_j)^q$. They both transform the value of a feature $j$ for a given object query $q$, denoted as $x_(q,j)$.
+![Membership functions](./figures/mmb_function.png)
 
 ### Similarity search
 Examples of probabilistic similarity results for single queries (indicated by black square brackets) using a Gaussian membership function:
+
 ![Similarity analysis by one query](./figures/sim_analysis_1.png)
 
 Average values are indicated in decreasing order from top left to bottom right. Only 16 objects are shown per search.

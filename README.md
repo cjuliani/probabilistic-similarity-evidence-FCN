@@ -1,4 +1,4 @@
-# Object-based Probabilistic Similarity Evidence (OPSE) of Latent Features from FCNs (see [arXiv paper](https://www.privatelink.com))
+# Object-based Probabilistic Similarity Evidence (OPSE) of Latent Features from FCNs (see [arXiv paper](https://arxiv.org/abs/2307.13606))
 
 OPSE is an algorithm processing the latent characteristics of fully convolutional networks (FCNs) to group objects with analogous properties. Its application is demonstrated using the UT Zappos50K datasets. A similarity analysis is carried out in 2 steps: (1) extracting feature patterns per object from a trained FCN, and (2) find the most similar patterns by fuzzy inference.
 

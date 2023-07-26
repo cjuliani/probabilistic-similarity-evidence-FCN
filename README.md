@@ -51,8 +51,8 @@ Two types of membership functions are implemented, notably the Gaussian (a) and 
 |:--:|
 | Similarity results for the queried digit “6” using a Gaussian membership function and ResNet50 as feature extractor. Note the difference of line thickness between the results of the two similarity queries. |
 
-## Examples of similarity analysis of minerals from micro-photographs (200-500 µm)
-Experiments with the OPSE algorithm were performed as part of a collaborative research on zircon grains at [IGP, NTNU](https://www.ntnu.edu/igp) (2021). 5000+ grains were identified, extracted and compared. Photographs have standardized colorimetry.
+## Examples of similarity analysis of minerals from micro-photographs
+Experiments with the OPSE algorithm were performed as part of a collaborative research on zircon grains at [IGP, NTNU](https://www.ntnu.edu/igp) (2021). 5000+ grains (200-500 µm) were identified, extracted and compared. Photographs have standardized colorimetry.
 
 | <img src="https://raw.githubusercontent.com/cjuliani/probabilistic-similarity-evidence-FCN/master/figures/grain_segment.PNG" width="65%"> |
 |:--:|

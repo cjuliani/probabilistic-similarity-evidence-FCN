@@ -1,6 +1,6 @@
 import os
 import config
-import layers
+import model
 import time
 import utils
 import random
@@ -9,11 +9,13 @@ import tensorflow as tf
 import fuzzy as fuzz
 import PIL.ImageOps
 import analyzer_tools as ext
-import distribution_analysis as da
+import signals as da
 
 from PIL import Image
 from matplotlib import pyplot as plt
 from matplotlib.axes._axes import _log as matplotlib_axes_logger
+from utils import clear_txt_file
+from pruning import pruning_by_CV, pruning_by_PCA
 
 matplotlib_axes_logger.setLevel('ERROR')
 tf.compat.v1.disable_v2_behavior()
@@ -117,7 +119,7 @@ class ConvAgent:
             name='x')
 
         # Get network logits.
-        logits = layers.unet(
+        logits = model.unet(
             x=self.x,
             n_class=config.CLASSES,
             batch_norm=config.BATCH_NORM)
@@ -288,7 +290,7 @@ class ConvAgent:
         print(f"∎ Pruning features of {len(self.conv_layers)} layers")
 
         # Clear existing text file where we record pruning results.
-        file_name = da.clear_txt_file(
+        file_name = clear_txt_file(
             path=self.obj_path,
             cls=cls,
             name=mode + '_pruning_results')
@@ -313,7 +315,7 @@ class ConvAgent:
                 feat_tmp = self.obj_feat_statistics[cls][lyr]['mean'].T
 
                 (self.pruning_feat_idxs[cls][lyr],
-                 self.pruning_weights[cls][mode][lyr]) = da.pruning_by_PCA(
+                 self.pruning_weights[cls][mode][lyr]) = pruning_by_PCA(
                     feat_mat=feat_tmp,
                     var_coef=coef)
             else:
@@ -321,7 +323,7 @@ class ConvAgent:
                 feat_tmp = self.obj_feat_statistics[cls][lyr]['mean'].T
 
                 (self.pruning_feat_idxs[cls][lyr],
-                 self.pruning_weights[cls][mode][lyr]) = da.pruning_by_CV(
+                 self.pruning_weights[cls][mode][lyr]) = pruning_by_CV(
                     feat_mat=feat_tmp,
                     cv_thresh=coef,
                     condition=cv_condition,
@@ -775,8 +777,7 @@ class ConvAgent:
             y_lim=y_lim,
             path=self.obj_graph_path,
             show=show,
-            save=save,
-            tick_int=self.pruning_layers_limits)
+            save=save)
 
     def plot_signals_histogram(self, cls_groups, width, color, alpha, grp_keys, stat_type, y_lim, show, save):
         """Displays histogram of the summed difference of activations signals

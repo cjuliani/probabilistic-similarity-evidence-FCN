@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import skfuzzy as fuzz
-from distribution_analysis import weighting
+from utils import weighting
 
 
 def fuzzify(layers, feat_stats, feat_idxs, stat_types, method, obj_range, gfactor,

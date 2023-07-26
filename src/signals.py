@@ -3,101 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def weighting(x):
-    """Returns normalized x."""
-    if type(x) == list:
-        x = np.array(x)
-    return x / np.sum(x)
-
-
-def clear_txt_file(path, cls, name):
-    """Returns empty text file."""
-    file_name = path + '/' + '{}_'.format(cls) + name + '.txt'
-    _ = open(file_name, 'w+')
-    return file_name
-
-
 def standardize_by_minmax(x, axis=0):
     """Returns x standardized around its mean."""
     num = (x - np.min(x, axis=axis))
     denom = (np.max(x, axis=axis) - np.min(x, axis=axis))
     return np.nan_to_num(num / denom)
-
-
-def pruning_by_PCA(feat_mat, var_coef):
-    """Returns indices and values features kept after applying dimensionality
-    reduction by PCA.
-
-    Args:.
-        feat_mat: feature matrix.
-        var_coef (float): ratio of variability (information) to keep among
-            features when reducing feature dimension.
-    """
-    # Calculate SVD (U columns = singular left vectors).
-    U, Sigma, Vh = np.linalg.svd(
-        a=np.nan_to_num(feat_mat),
-        full_matrices=False,
-        compute_uv=True)
-
-    # Get first vector.
-    vect = U[:, 0]
-    inds = np.arange(U.shape[0])
-    vect_indexed = np.vstack((inds, vect)).T  # (indices, values)
-
-    # Sort the vector given its singular values.
-    vect_sorted = vect_indexed[np.abs(vect_indexed[:, 1]).argsort()][::-1]
-
-    # Normalize.
-    vect_norm = weighting(vect_sorted[:, 1])
-
-    # Keep indices of features explaining X% of variance in
-    # feature maps.
-    tokeep_indexes, tokeep_var = [], []
-    variance_sum = 0.
-    for i in range(len(vect)):
-        if variance_sum >= var_coef:
-            break
-        variance_sum += vect_norm[i]
-        tokeep_indexes.append(int(vect_sorted[i, 0]))
-        tokeep_var.append(vect_sorted[i, 1])
-
-    return tokeep_indexes, tokeep_var
-
-
-def pruning_by_CV(feat_mat, condition, cv_thresh, file_name):
-    """Returns indices and values features kept after applying dimensionality
-    reduction by coefficient of variation (CV). CV corresponds to how much
-     percent the mean is explained by standard deviation, this is to compare
-     variability between features (> 1 means high variance, while < 1 means
-     low variance).
-
-     Args:
-        feat_mat: class of segmentation (object).
-        condition (str or None): 'above' threshold, or below if None.
-        cv_thresh (float): coefficient of variation threshold above (or below)
-            which pruning  is applied.
-        file_name (str) name of file with weights saved.
-    """
-    # Get coefficient of variation.
-    var = np.apply_along_axis(
-        func1d=lambda x: np.std(x) / np.mean(x),
-        axis=0,
-        arr=feat_mat)
-
-    # Collect indices where CV is above-equal or below-equal to 1.
-    if condition == "above":
-        cv_idxs = np.where(var >= cv_thresh)[0]
-    else:
-        cv_idxs = np.where(var <= cv_thresh)[0]
-
-    txt = 'indices kept out of {}: {}'.format(feat_mat.shape[1], len(cv_idxs))
-    print('\t\t' + txt)
-
-    # Write results in a separate text file.
-    with open(file_name, 'a') as file_a:
-        file_a.write('- ' + txt + '\n')
-
-    return cv_idxs, var[cv_idxs]
 
 
 def plot_group_signals_histogram(grp_keys, width, color, alpha, N, signals, fig_size,
@@ -149,7 +59,7 @@ def plot_group_signals_histogram(grp_keys, width, color, alpha, N, signals, fig_
 
 
 def plot_group_signals(fts, cls_groups, cls_colors, grp_keys, N, indices, curves_lw,
-                       size, alpha, mode, fig_size, path, y_lim, show, save, tick_int):
+                       size, alpha, mode, fig_size, path, y_lim, show, save):
     """Displays the scatter plot of feature signal difference calculated
     between groups of clusters (of images), or single x images.
 
@@ -170,7 +80,6 @@ def plot_group_signals(fts, cls_groups, cls_colors, grp_keys, N, indices, curves
         y_lim (list): plot limits on Y.
         show (bool): if True, show the plot.
         save (bool): if True, save the plot.
-        tick_int: x-axis ticks to be drawn.
     """
     # Get groups of clusters given indices.
     groups = [cls_groups[i] for i in grp_keys]

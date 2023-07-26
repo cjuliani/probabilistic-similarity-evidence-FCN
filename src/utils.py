@@ -147,3 +147,17 @@ def check_directory_and_replace(directory, show=True):
 
     # Create new directory.
     check_directory(directory, show=False)
+
+
+def weighting(x):
+    """Returns normalized x."""
+    if type(x) == list:
+        x = np.array(x)
+    return x / np.sum(x)
+
+
+def clear_txt_file(path, cls, name):
+    """Returns empty text file."""
+    file_name = path + '/' + '{}_'.format(cls) + name + '.txt'
+    _ = open(file_name, 'w+')
+    return file_name

@@ -2,24 +2,46 @@
 
 OPSE is an algorithm processing the latent characteristics of fully convolutional networks (FCNs) to group objects with analogous properties. Its application is demonstrated using the UT Zappos50K datasets. A similarity analysis is carried out in 2 steps: (1) extracting feature patterns per object from a trained FCN, and (2) find the most similar patterns by fuzzy inference.
 
-*Keywords: object, similarity, fuzzy inference, convolutional neural networks, segmentation*
+**Keywords:** _object, similarity, fuzzy inference, convolutional neural networks, segmentation_
+
+# How to use
+The package consist of the source files in `src`, among which (1) `model.py` represents the learning model used, (2) `analyzer.py` defined the analyzer object used to extract, transform and analyze features from the model's convolutional layers, and (3) `signals.py` consists of plotting tools used to evaluate the transformed features into various graphs.
+Note that prior to collecting features from a model, the analyzer must be configured. The file `config.py` determines (1) which convolutional layers to analyse, (2) the type of statistics calculated from features (transformation), or signals, (3) the model restored and (4) the segmentation class considered in feature value extraction. The end-user functions are defined in `functions.py` by order of usage. They must be triggered in a Python console individually.
+
+Convolutional layers considered in feature extraction, as indicated in `config.py`:
+```python
+# Based on a previously trained UNet architecture.
+CONV_LAYERS = sorted(
+    ['conv11', 'conv21', 'conv31', 'conv41', 'conv51',
+     'conv61', 'conv71', 'conv81', 'conv91', 'conv12',
+     'conv22', 'conv32', 'conv42', 'conv52', 'conv62',
+     'conv72', 'conv82', 'conv92'])
+```
+
+The type of statistical transformation of the network features are indicated by:
+```python
+STAT_TYPES = ['mean', 'std', 'cv']
+```
+`std` means standard deviation, and `cv` is the coefficient of variation. Both can be used, in combination to the mean for evaluation the objects similarity.
+
 
 ### Feature extraction and transformation procedures
-Two types of membership functions are implemented, notably the Gaussian (a) and trapezoidal (b) functions:
+Two types of membership functions are implemented, notably the Gaussian (a) and trapezoidal (b) functions written $μ_(A ̃_(u_j ))^q$. They both transform the value of a feature $j$ for a given object query $q$, denoted as $x_(q,j)$.
 ![Membership functions](./figures/mmb_function.png)
 
-The object-oriented extraction of a feature m_(i,j) (yellow mask) from an activated feature f_(j) is done for a set of features F:
+The object-oriented extraction of a feature $m_(i,j)$ (yellow mask) from an activated feature $f_(j)$ is done for a set of features F from a given layer (e.g., `conv11`). A statistical transformation is performed to obtaine the feature vector $v_i$, which further converted into a probabilistic similarity vector $ρ_i$. This conversion is done after fuzzifying the probability density function (PDF) of every feature component indexed $j$, whose value for an $i$th object is $x_(i,j)$. If we were to evaluate the similarity analysis of an object indexed using a Gaussian membership function (GMF), its feature value $x_(q,j)$ calculated from a cropped feature $m_(q,j)$ would correspond to the center of that function.
 ![Feature extraction to transformation](./figures/extract_proc.png)
 
 ### Similarity search
 Examples of probabilistic similarity results for single queries (indicated by black square brackets) using a Gaussian membership function:
-
 ![Similarity analysis by one query](./figures/sim_analysis_1.png)
+
 Average values are indicated in decreasing order from top left to bottom right. Only 16 objects are shown per search.
 
 Example of probabilistic similarity results for two queries (indicated by black square brackets) using a trapezoidal membership function:
 
 ![Similarity analysis by two queries](./figures/sim_analysis_2.png)
+
 Average values are presented in decreasing order from top left to bottom right. Only 24 objects shown.
 
 Examples of similarity results for the queried digit “1”, using a Gaussian membership function and ResNet50 as feature extractor:
@@ -34,23 +56,3 @@ Examples of similarity results for the queried digit “6”, using a Gaussian m
 
 Note the difference of line thickness between the results of the two similarity queries.
 
-# How to use
-
-The package consist of the source files in `src`, separated from `config.py` which configures e.g. the learning model to restore, the convolutional layers to analyse, and the type of statistices calculate from features. All functions required to analyze, extract and transform features from convolutional layers are defined in `functions.py`.
-
-The convolutional layers to analyze for feature extraction are indicated in `config.py`:
-```python
-# Convolution layers analyzed for similarity analysis.
-# Based on a previously trained UNet architecture.
-CONV_LAYERS = sorted(
-    ['conv11', 'conv21', 'conv31', 'conv41', 'conv51',
-     'conv61', 'conv71', 'conv81', 'conv91', 'conv12',
-     'conv22', 'conv32', 'conv42', 'conv52', 'conv62',
-     'conv72', 'conv82', 'conv92'])
-```
-
-The type of statistics used to describe the network features are indicated by:
-```python
-STAT_TYPES = ['mean', 'std', 'cv']
-```
-`std` means standard deviation, and `cv` is the coefficient of variation. Both can be used, in combination to the mean, to analyse the similarity.

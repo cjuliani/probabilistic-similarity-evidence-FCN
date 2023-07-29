@@ -1,8 +1,8 @@
 import cv2
-import utils
 import numpy as np
 import tensorflow as tf
 
+from src import utils
 from scipy import ndimage
 from PIL import Image
 from matplotlib import cm
@@ -72,41 +72,24 @@ def get_representation(sample, layer, op_name, sess, feed_x, softmax=False):
     return reprs[0, :, :, :]
 
 
-def get_layer_features(layer, layer_ops, sess, feed_x, sample):
-    """Returns feature maps of layer.
+def get_representations_from_tensors(sample, tensors, sess, feed_x, softmax=False):
+    """Returns the layer activations of given layer (representation).
 
     Args:
-        layer: convolution layer considered.
-        layer_ops (list): list of operation names from convolution
-            layer.
+        sample: image x to network.
+        tensors (list): list of tensors from which activation
+            features are extracted.
         sess: tensorflow session.
         feed_x: placeholder for x samples.
-        sample: image x to network.
+        softmax (bool): if True, apply softmax (boolean)
     """
-    # reference layer to extract feature activations at object level
-    feat_maps = None
-    error = None
-    for op in layer_ops:
-        try:
-            # try the function given the operation name
-            # some layers do not use same operations (e.g. Relu, mul...)
-            # the list of activations should be defined in self.layer_ops
-            feat_maps = get_representation(
-                sample=sample,
-                layer=layer,
-                op_name=op,
-                sess=sess,
-                feed_x=feed_x,
-                softmax=False)
-            break
-        except Exception as err:
-            error = err
-            continue
-
-    if feat_maps is None:
-        raise Exception(f"No feature maps due to error '{error}'.")
-
-    return feat_maps
+    reprs = get_activations(
+        layer=tensors,
+        x=np.expand_dims(sample, axis=0),
+        sess=sess,
+        feed_x=feed_x,
+        softmax=softmax)
+    return [item[0, ...] for item in reprs]
 
 
 def get_object_mask(dim_ratio, binary):
@@ -153,38 +136,6 @@ def get_object_mask(dim_ratio, binary):
     return binary, mask_indices
 
 
-def get_object_feature(layer_arr, layer_feat_id, mask, mask_indices, feat_type):
-    """Returns feature matrix and values of cropped object.
-
-    Args:
-        layer_arr (): x layer feature,
-        layer_feat_id (int): dimension considered from the
-            feature layer.
-        mask: binarized segmentation map.
-        mask_indices: indices of segmentation mao part of
-            object mask.
-        feat_type (str): the way feature values are collected from feature maps.
-            If 'box' chosen, it returns the entire image feature, while 'object'
-            allows returning feature values of the segmented object only (in the
-            image), and 'positives' allows returning only positive values from
-            the image (valid for Relu or Sigmoid activations).
-    """
-    obj_feat = layer_arr[:, :, layer_feat_id]
-
-    # Extract feature values where mask is True.
-    obj_feat_values = obj_feat[mask_indices[0], mask_indices[1]]
-
-    # Rule out feature values not related to segmented object.
-    obj_feat[mask < 1] = 0
-
-    if feat_type == 'box':
-        # Consider the entire image containing the object.
-        return obj_feat
-    else:
-        # Consider the object (masked) only.
-        return obj_feat_values
-
-
 def get_desc_statistics(obj_feat, eps=1e-10):
     """Returns statistics of feature matrices extracted from network.
 
@@ -192,6 +143,13 @@ def get_desc_statistics(obj_feat, eps=1e-10):
         obj_feat: feature matrix.
         eps (float): epsilon value to avoid division by 0.
     """
-    mean, stddev = np.nan_to_num(np.mean(obj_feat)), np.nan_to_num(np.std(obj_feat))
+    mean, stddev = np.nan_to_num(np.mean(obj_feat, axis=1)), np.nan_to_num(np.std(obj_feat, axis=1))
     coef_var = stddev / (mean + eps)
     return mean, stddev, coef_var  # mean, standard deviation, coefficient of variation
+
+
+def softmax(x):
+    """Returns array results from softmax operation."""
+    a = np.expand_dims(np.sum(np.exp(x), axis=-1), axis=-1)
+    A = np.concatenate([a, a], axis=-1)
+    return np.exp(x) / A

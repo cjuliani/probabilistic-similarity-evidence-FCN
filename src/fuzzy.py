@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import skfuzzy as fuzz
-from utils import weighting
+from src.utils import weighting
 
 
 def fuzzify(layers, feat_stats, feat_idxs, stat_types, method, obj_range, gfactor,
@@ -131,7 +131,7 @@ def format_text(text):
     return text.replace('/', '_')
 
 
-def plot_images(x, prob_values, indices, N, name, path, title, show=True, save=False):
+def plot_images(x, prob_values, indices, N, name, path, title, intv=10, show=True, save=False):
     """Displays images according to fuzzy results.
 
     Args:
@@ -143,6 +143,7 @@ def plot_images(x, prob_values, indices, N, name, path, title, show=True, save=F
         name (str): image name to save.
         path (str): folder path to save the plots.
         title (str): tile of plot.
+        intv (int): number of items to plot in a row.
         show (bool): if True, show the plot.
         save (bool): if True, save the plot.
     """
@@ -153,7 +154,6 @@ def plot_images(x, prob_values, indices, N, name, path, title, show=True, save=F
 
     # Define grid of images to display, which consists of 10
     # columns.
-    intv = 10
     n_columns = len(selected_ids)
     n_rows = int(n_columns // intv) + 1
 
@@ -176,8 +176,9 @@ def plot_images(x, prob_values, indices, N, name, path, title, show=True, save=F
     if save is True:
         name_ = '{}.png'.format(name)
         output_name = os.path.join(os.path.abspath(path), name_)
-        plt.savefig(output_name, dpi=300)
+        plt.savefig(output_name, dpi=400)
         print('○ ' + name_ + ' saved.')
+        plt.close()
 
     if show is True:
         plt.show()
@@ -185,6 +186,8 @@ def plot_images(x, prob_values, indices, N, name, path, title, show=True, save=F
     # Reset rc parameters to avoid getting red frame on other
     # plots.
     _ = matplotlib.rcParams.update(matplotlib.rcParamsDefault)
+
+    return selected_ids
 
 
 def plot_features(feats, sprobs, layer, feat_id, path, name, show=True, save=False):

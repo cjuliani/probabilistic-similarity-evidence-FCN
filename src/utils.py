@@ -82,20 +82,20 @@ def remove_transparency(x, bg_colour=(255, 255, 255)):
         return x
 
 
-def resize_array(im, size, resample=True):
+def resize_array(im, size, resample=False):
     """Returns array resize to defined size.
 
     Args:
         im: x image to resize.
-        size (int or float): finql size of image.
-        resample (bool): if True, resize with resampling.
+        size: final size of image.
+        resample: if True, resize with resampling.
     """
-    # Convert to PIL onbject.
+    # Convert to PIL object.
     img = Image.fromarray(im)
     # Resize image.
     if type(size) == int:
         img = img.resize((size, size), resample)
-    elif (type(size) == int) or (type(size) == float):
+    elif type(size) == float:
         img = img.resize(size, resample)
     return np.array(img)
 

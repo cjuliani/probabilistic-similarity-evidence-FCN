@@ -22,7 +22,7 @@ MODEL_PATH = "checkpoints\\(shoes)\\train_rsp0.5"  # model folder to restore
 MODEL = "segmentation.ckpt-1900"  # weights to restore (in model folder)
 
 # Data paths.
-IMG_PATH = "./datasets/(shoes)"
+IMG_PATH = "./datasets/shoes_selected"
 PREDICT_PATH = "./predictions"
 OBJ_PATH = "./objects"
 OBJ_ATTR_SUFFIX = "/attributes"

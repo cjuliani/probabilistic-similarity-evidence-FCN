@@ -16,16 +16,16 @@ agent.predict(
 agent.collect_image_arrays()
 agent.collect_features(
     cls='conv100',
-    feat_type='object')
+    feat_type='object',
+    batch=200)
 
 # Get feature statistics
-agent.get_obj_feat_statistics(cls='conv100')
-agent.save_objects_attributes(
+agent.save_feat_statistics(
     classes=['conv100'],
     replace_stats=True)
 
 # Load pre-saved feature statistics.
-agent.load_objects_attributes(classes=['conv100'])
+agent.load_feat_statistics(classes=['conv100'])
 
 # Plot histogram of a feature mean values.
 agent.plot_feature_mean_signal_distribution(
@@ -45,12 +45,14 @@ agent.apply_pruning(
     mode='pca',  # by 'pca' or 'cv' (coefficient of variation)
     cv_condition='above',
     cls='conv100',
-    coef=.99)
+    coef=.99  # use e.g., 0.99 for 99% variance using PCA, or e.g. 0.x if CV mode
+)
 
 # Scatter plot of weight values associated to network features (non-pruned)
 agent.plot_weigths(
     cls='conv100',
-    weight_type='pca')
+    weight_type='pca'  # choose 'pca' if you used 'pca' method for pruning
+)
 
 # Apply fuzzy evaluation of feature vectors described, which are
 # by descriptive statistics (mean, std, and/or cv), given a target
@@ -67,12 +69,11 @@ agent.fuzzify(
 
 # Plot N objects sharing a certain similarity with target object(s)
 # defined in fuzzy analysis.
-agent.plot_target_similarity(
+agent.plot_similarity(
     show_mode='images',  # images, features
     out_n=20,  # number of objects shown (the closest ones to target)
-    layer='conv11',  # if show mode is 'features', features of this layer showed
-    layer_feat_id=0,
     title_type='probability',  # object, probability
+    intv=8,
     show=True,
     save=False)
 

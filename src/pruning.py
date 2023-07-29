@@ -1,5 +1,5 @@
 import numpy as np
-from utils import weighting
+from src.utils import weighting
 
 
 def pruning_by_PCA(feat_mat, var_coef):

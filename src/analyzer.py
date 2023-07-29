@@ -1,21 +1,22 @@
 import os
 import config
-import model
 import time
-import utils
 import random
 import numpy as np
 import tensorflow as tf
-import fuzzy as fuzz
 import PIL.ImageOps
-import analyzer_tools as ext
-import signals as da
+
+from src import fuzzy as fuzz
+from src import model
+from src import utils
+from src import analyzer_tools as ext
+from src import signals as da
 
 from PIL import Image
 from matplotlib import pyplot as plt
 from matplotlib.axes._axes import _log as matplotlib_axes_logger
-from utils import clear_txt_file
-from pruning import pruning_by_CV, pruning_by_PCA
+from src.utils import clear_txt_file
+from src.pruning import pruning_by_CV, pruning_by_PCA
 
 matplotlib_axes_logger.setLevel('ERROR')
 tf.compat.v1.disable_v2_behavior()
@@ -31,6 +32,8 @@ class ConvAgent:
     inference, and plot feature signals (statistical values).
 
     Attributes:
+        all_skipped (list): indices of data skipped from dataset during processing
+            due to processing issues.
         diff_sum: signal difference (feature mean vectors) calculated
             between clusters of images.
         diff_idx (list): indices of features considered in the calculation of
@@ -63,7 +66,6 @@ class ConvAgent:
         obj_fuzzy_path (str): folder path for fuzzy inference results.
         out_stats (str): folder path to save feature statistics.
         conv_layers (list): convolutional layers considered in the analysis.
-        input_range (list): range of x from dataset considered in the analysis.
         stat_types (list): stat_types of statistics considered in the analysis.
         obj_imgs (list): list of x image arrays.
         feature_dict (dict): dictionary of network features collected per x images.
@@ -71,6 +73,7 @@ class ConvAgent:
     """
 
     def __init__(self, conv_layers):
+        self.all_skipped = None
         self.diff_sum = None
         self.diff_idx = None
         self.sorted_probs = None
@@ -87,7 +90,6 @@ class ConvAgent:
         self.obj_imgs = None
         self.feature_dict = None
         self.img_size = config.IMG_SIZE
-        self.input_range = config.INPUT_RANGE
         self.img_size = config.IMG_SIZE
         self.stat_types = config.STAT_TYPES
 
@@ -105,12 +107,6 @@ class ConvAgent:
 
         # Get image data.
         self.img_names, self.data_dirs = utils.load_train(path=config.IMG_PATH)
-
-        # Set maximum data limit for dataset. Useful if dataset
-        # is quite big.
-        datasets_n = len(self.img_names)
-        if self.input_range[1] > datasets_n:
-            self.input_range[1] = datasets_n
 
         # Set up placeholders.
         self.x = tf.compat.v1.placeholder(
@@ -158,7 +154,6 @@ class ConvAgent:
         print("\t▹ Data folders: ", self.data_dirs)
         print("\t▹ Total x: ", len(self.img_names))
         print('\t▹ Shape of x:', tmp_sample.shape)
-        print('\t▹ Data range considered:', self.input_range)
         print('\t▹ Segments:', ', '.join(config.CONV_SEGMENTS))
 
     def collect_image_arrays(self):
@@ -176,7 +171,7 @@ class ConvAgent:
         for lyr in self.conv_layers:
             self.obj_feat_statistics[cls][lyr] = {}
 
-    def save_objects_attributes(self, classes, replace_stats=True):
+    def save_feat_statistics(self, classes, replace_stats=True):
         """Save properties and features of detected objects.
 
         Args:
@@ -208,7 +203,7 @@ class ConvAgent:
             except (AttributeError, KeyError, IndexError) as err:
                 print('\t\tStatistics not saved, because: {}.\n'.format(err))
 
-    def load_objects_attributes(self, classes):
+    def load_feat_statistics(self, classes):
         """Loads previously generated features statistics.
 
         Args:
@@ -320,7 +315,7 @@ class ConvAgent:
                     var_coef=coef)
             else:
                 # Feature pruning by coefficient of variation (CV).
-                feat_tmp = self.obj_feat_statistics[cls][lyr]['mean'].T
+                feat_tmp = self.obj_feat_statistics[cls][lyr]['mean']
 
                 (self.pruning_feat_idxs[cls][lyr],
                  self.pruning_weights[cls][mode][lyr]) = pruning_by_CV(
@@ -355,7 +350,7 @@ class ConvAgent:
             file_a.write('\n' + txt + '\n')
         print(txt)
 
-    def get_obj_features(self, cls, feat_type, feat_layers):
+    def get_obj_features(self, cls, feat_type, feat_layers, input_range, cnt_start, batch):
         """Returns a dictionary of features collected per layer.
 
         Args:
@@ -366,22 +361,28 @@ class ConvAgent:
                 image), and 'positives' allows returning only positive values from
                 the image (valid for Relu or Sigmoid activations).
             feat_layers (list): feature layers considered from network
+            input_range (list or tuple): the range of dataset considered for
+                collecting features from.
+            cnt_start (int): the dataset starting index to collect features
+                from given the batch.
+            batch (int): number of data instances considered in the feature
+                collection.
         """
         # Create dictionary of feature arrays to be stored.
         feat_dict = {}
 
         # Iterate feature extraction per image sample.
-        cnt, avg_speed = 0, 0.
+        k, cnt, avg_speed = 0, cnt_start, 0.
         skipped = []
-        est_remaining_time = (len(self.img_names) * 1.) / 60
-        for spl_i in range(len(self.img_names)):
+        est_remaining_time = (batch * 1.) / 60
+        for spl_i in range(*input_range):
             start = time.time()
 
-            # Get image array.
-            x_batch = utils.get_array_from_image(
-                img=self.img_names[spl_i],
-                img_size=self.img_size,
-                normalize=True)
+            try:
+                # Get image array.
+                x_batch = self.obj_imgs[spl_i]
+            except IndexError:
+                continue
 
             # Make sure image array is correct.
             if (x_batch.ndim < 3) or (x_batch.shape[-1] != 3):
@@ -391,14 +392,22 @@ class ConvAgent:
                 skipped.append(self.img_names[spl_i])
                 continue
 
-            # Get segmentation map from network.
-            x_segmentation = ext.get_representation(
+            # Collect tensors
+            tensors = []
+            for l in feat_layers:
+                ly = tf.compat.v1.get_default_graph().get_tensor_by_name(l + config.OPERATIONS[0])
+                tensors.append(ly)
+            tensors += [tf.compat.v1.get_default_graph().get_tensor_by_name(cls + config.OBJ_OPERATION)]
+
+            feat_maps = ext.get_representations_from_tensors(
                 sample=x_batch,
-                layer=cls,
-                op_name=config.OBJ_OPERATION,
+                tensors=tensors,
                 sess=self.sess,
                 feed_x=self.x,
-                softmax=True)
+                softmax=False)
+
+            x_segmentation = ext.softmax(feat_maps[-1])
+            feat_maps = feat_maps[:-1]
 
             # Get binary map with main object of given class.
             binary = ext.get_binary_map(
@@ -406,39 +415,28 @@ class ConvAgent:
                 blur_coef=(3, 3),
                 binary_thresh=124)
 
-            for i, layer in enumerate(feat_layers):
-                # Get array of layers' feature maps.
-                x_feat_arr = ext.get_layer_features(
-                    layer=layer,
-                    layer_ops=config.OPERATIONS,
-                    sample=x_batch,
-                    sess=self.sess,
-                    feed_x=self.x)
-
+            for feat, layer in zip(feat_maps, self.conv_layers):
                 # Get dimension ratio between network output segmentation
                 # and current layer.
-                dim_ratio = self.img_size / x_feat_arr.shape[1]
+                dim_ratio = self.img_size / feat.shape[1]
 
                 feat_dict[cnt] = feat_dict.get(cnt, {})
                 feat_dict[cnt][layer] = feat_dict.get(layer, [])
 
                 # Get object's mask and related mask indices.
-                mask, mask_indices = ext.get_object_mask(
+                _, mask_indices = ext.get_object_mask(
                     dim_ratio=dim_ratio,
                     binary=binary)
 
                 # Get object features of current layer given number of layer
                 # outputs.
-                feat_items = []
-                for dim_i in range(x_feat_arr.shape[-1]):
-                    feat_item = ext.get_object_feature(
-                        layer_arr=x_feat_arr,
-                        layer_feat_id=dim_i,
-                        mask=mask,
-                        mask_indices=mask_indices,
-                        feat_type=feat_type)
-
-                    feat_items += [feat_item]
+                # Extract feature values where mask is True.
+                if feat_type == 'box':
+                    # Consider the entire image containing the object.
+                    feat_items = feat[mask_indices[0], mask_indices[1], :].T
+                else:
+                    # Consider the object (masked) only.
+                    feat_items = feat.reshape([-1, feat.shape[-1]]).T
 
                 # Convert features into array.
                 feat_items = np.array(feat_items)
@@ -450,20 +448,18 @@ class ConvAgent:
             speed_val = time.time() - start
             speed = "({:.2f} sec)".format(time.time() - start)
             msg = (f'processed (building dictionary): images,' +
-                   f' {cnt + 1}/{len(self.img_names)} ' +
+                   f' {k + 1}/{batch} ' +
                    speed + " (est. time left: {:.2f} mins)".format(est_remaining_time))
             print(msg, end="\r")
 
             # ----- define timing and increment
-            est_remaining_time = (speed_val * (len(self.img_names) - cnt)) / 60  # in minutes
+            est_remaining_time = (speed_val * (batch - k)) / 60  # in minutes
             cnt += 1
+            k += 1
 
-        # Reformat images processed.
-        self.img_names = [path for path in self.img_names if path not in skipped]
+        return feat_dict, skipped
 
-        return feat_dict
-
-    def collect_features(self, cls, feat_type='object'):
+    def collect_features(self, cls, feat_type='object', batch=1000):
         """Returns a dictionary of network features.
 
         Args:
@@ -471,50 +467,34 @@ class ConvAgent:
             feat_type (str): type of feature, i.e. 'box' to collect the entire
                 image's feature values or 'object' to collect feature values
                 related to the segmented object only.
-        """
-        self.feature_dict = self.get_obj_features(
-            cls=cls,
-            feat_layers=self.conv_layers,
-            feat_type=feat_type)
-
-    def get_obj_feat_statistics(self, cls):
-        """Collects statistics of non-pruned feature.
-
-        Args:
-            cls (str): class of segmentation considered (layer name).
+            batch (int): number of data instances considered in the feature
+                collection.
         """
         self.reset_obj_feat_statistics(cls)
 
-        # Calculate feature statistics per input and convolution
-        # layer.
-        for obj_i in range(len(self.img_names)):
-            for i, layer in enumerate(self.conv_layers):
-                # Get layer feature array.
-                feat_arr = self.feature_dict[obj_i][layer]
+        tmp = len(self.img_names) % batch
+        steps = len(self.img_names) // batch
 
-                # Get statistics per feature.
-                tmp_lst = []
-                for dim_i in range(feat_arr.shape[0]):
-                    obj_feat = feat_arr[dim_i]
+        if tmp > 0:
+            steps += 1
 
-                    # Get feature matrix statistics ('mean', 'std', 'cv').
-                    results = ext.get_desc_statistics(obj_feat=obj_feat)
-                    tmp_lst += [list(results)]
+        self.all_skipped = []
+        for i in range(steps):
+            print(f"step: {i + 1}/{steps}")
 
-                # Convert stats of current layer into array.
-                tmp_arr = np.array(tmp_lst)  # (feat_dim, stat_types)
+            self.feature_dict, skipped = self.get_obj_features(
+                cls=cls,
+                feat_layers=self.conv_layers,
+                feat_type=feat_type,
+                input_range=[i * batch, (i * batch) + batch],
+                cnt_start=i * batch,
+                batch=batch)
+            self.all_skipped += skipped
 
-                # Feed database per type of statistics.
-                cnt = 0
-                for stat_type in self.stat_types:
-                    self.obj_feat_statistics[cls][layer][stat_type] = \
-                        self.obj_feat_statistics[cls][layer].get(stat_type, []) + [tmp_arr[:, cnt]]  # (stats,)
-                    cnt += 1
-
-                # -----
-                msg = (f'processed (statistics): images {obj_i + 1}/{len(self.img_names)},' +
-                       f' {i + 1}/{len(self.conv_layers)}')
-                print(msg, end="\r")
+            # Get feature statistics
+            self.get_obj_feat_statistics(
+                cls='conv100',
+                input_range=[i * batch, (i * batch) + batch])
 
         # Convert list of statistics stored into arrays.
         for i, layer in enumerate(self.conv_layers):
@@ -529,6 +509,42 @@ class ConvAgent:
 
         print(f"Statistics of {len(self.conv_layers)} layers features for {len(self.img_names)} inputs collected.")
         print('\t▹ stat_types considered: {}.'.format(', '.join(self.stat_types)))
+
+        # Reformat images processed.
+        self.img_names = [path for path in self.img_names if path not in self.all_skipped]
+
+    def get_obj_feat_statistics(self, cls, input_range):
+        """Collects statistics of non-pruned feature.
+
+        Args:
+            cls (str): class of segmentation considered (layer name).
+            input_range (list or tuple): range of dataset considered.
+        """
+        # Calculate feature statistics per input and convolution
+        batch_size = input_range[1] - input_range[0]
+
+        # layer.
+        j = 0
+        for obj_i in range(*input_range):
+            for i, layer in enumerate(self.conv_layers):
+                # Get layer feature array.
+                feat_arr = self.feature_dict[obj_i][layer]
+
+                mean_, std_, cv_ = ext.get_desc_statistics(obj_feat=feat_arr)
+                tmp_arr = np.vstack([mean_, std_, cv_]).T
+
+                # Feed database per type of statistics.
+                cnt = 0
+                for stat_type in self.stat_types:
+                    self.obj_feat_statistics[cls][layer][stat_type] = \
+                        self.obj_feat_statistics[cls][layer].get(stat_type, []) + [tmp_arr[:, cnt]]  # (stats,)
+                    cnt += 1
+
+                # -----
+                msg = (f'processed (statistics): images {j + 1}/{batch_size},' +
+                       f' {i + 1}/{len(self.conv_layers)}')
+                print(msg, end="\r")
+            j += 1
 
     def fuzzify(self, targets, obj_range, stat_types, method, gfactor, weighting, norm, show_info=True, sorting=True):
         """Fuzzify features with respect to targets.
@@ -584,9 +600,9 @@ class ConvAgent:
 
         if show_info is True:
             print(f"Features of {len(self.conv_layers)} layers fuzzified given target(s): {targets}.")
-            if weighting != 'pca' or weighting != 'speciation':
-                print("\t▹ No weighting scheme used. Choose <pca> if pruning by pca method was applied,"
-                      " or <speciation> after calculating neurons speciation via <get_cluster_signal_difference>.")
+            if weighting != 'pca' and weighting != 'speciation':
+                print("\t▹ No weighting scheme used. Choose 'pca' if pruning by pca method was applied,"
+                      " or 'speciation' after calculating neurons speciation via 'get_cluster_signal_difference'.")
             print("\n(!) Probabilistic similarity is calculated per 'stat_types', then averaged and sorted.")
 
     @staticmethod
@@ -658,7 +674,6 @@ class ConvAgent:
             sig_interval (list): signal magnitude interval to check its
                 percentage taken in network.
         """
-        print(f"(!) Results for class '{self.current_cls}' and pruning coef. of {self.current_coef}.")
         da.get_signal_percentage(
             signals=self.diff_sum,
             interval=sig_interval)
@@ -849,19 +864,16 @@ class ConvAgent:
             mode=mode,
             save=save)
 
-    def plot_target_similarity(self, show_mode, out_n, layer, layer_feat_id, title_type, show, save):
+    def plot_similarity(self, show_mode, out_n, intv, title_type, show, save):
         """Display probabilistic similarity results for given target(s).
 
         Args:
             show_mode (str): display 'features', or 'images' (by default).
             out_n (int): number of similar objects to display, in regard to
                 the target(s).
-            layer (str): name of feature layer to display if show_mode is 'features'.
-            layer_feat_id (int): activated output ID of feature layer to display
-                if show_mode  is 'features'. Note that 'layer_ft_id' is the index
-                from 'pruning_feat_idxs'.
             title_type (str): display 'probability' value, or the 'object'
                 ID (by default).
+            intv (int): number of items to plot in a row.
             show (bool): if True, show the plot.
             save (bool): if True, save the plot.
         """
@@ -880,47 +892,21 @@ class ConvAgent:
         txt = (f"targets-{tgt_txt}_outn{out_n}_gfactor{self.fuzzy_gfactor}_layersn" +
                f"-{len(self.conv_layers)}_method-{self.fuzzy_method}")
 
-        if show_mode == 'features':
-            selected_ids = self.sorted_ids[-out_n:]
-            selected_probs = self.sorted_probs[-out_n:]  # used to display
+        # Plot target image object and corresponding similar image
+        # objects estimated via fuzzy inference.
+        object_ids = fuzz.plot_images(
+            prob_values=self.sorted_probs,
+            indices=self.sorted_ids,
+            N=out_n,
+            x=self.obj_imgs,
+            name=txt,
+            path=self.obj_fuzzy_path,
+            title=title_type,
+            intv=intv,
+            show=show,
+            save=save)
 
-            # Get features of images for given layer.
-            fts_dict = self.get_obj_features(
-                cls=self.current_cls,
-                feat_layers=[layer],
-                feat_type='box')
-
-            # Define features of images with 'selected_ids'.
-            tmp_lst = []
-            for obj_i in selected_ids:
-                feat_arr = fts_dict[obj_i][layer]
-                tmp_lst += [feat_arr[layer_feat_id]]
-
-            # Plot target feature of layer and corresponding similar
-            # features estimated via fuzzy inference.
-            fuzz.plot_features(
-                feats=tmp_lst,
-                sprobs=selected_probs,
-                layer=layer,
-                feat_id=layer_feat_id,
-                path=self.obj_fuzzy_path,
-                name=txt,
-                show=show,
-                save=save)
-
-        elif show_mode == 'images':
-            # Plot target image object and corresponding similar image
-            # objects estimated via fuzzy inference.
-            fuzz.plot_images(
-                prob_values=self.sorted_probs,
-                indices=self.sorted_ids,
-                N=out_n,
-                x=self.obj_imgs,
-                name=txt,
-                path=self.obj_fuzzy_path,
-                title=title_type,
-                show=show,
-                save=save)
+        return object_ids
 
     def plot_weigths(self, cls, weight_type):
         """Displays the weight results from pruning.
@@ -970,7 +956,7 @@ class ConvAgent:
         cm_gradient = plt.get_cmap(cmap)
 
         # Randomize indices of input images to predict from.
-        idx = list(range(self.input_range[-1]))
+        idx = list(range(len(self.img_names)))
         selected_indices = random.sample(idx, N)
 
         for spl_i in selected_indices:
